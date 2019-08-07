@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: slackcafe
+spec:
+  template:
+    metadata:
+      labels:
+        app: slackcafe
+    spec:
+      containers:
+      - name: slackcafe
+        image: 'docker.io/xrstf/slackcafe:latest'
+        args:
+        - '-slack-url=https://hooks.slack.com/services/.../.../...'
+        - '-slack-username=Schachcafé'
+        - '-slack-channel=schachcafe'
+        resources:
+          requests:
+            cpu: 50m
+            memory: 24Mi
+          limits:
+            cpu: 200m
+            memory: 64Mi
