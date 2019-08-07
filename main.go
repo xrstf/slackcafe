@@ -34,8 +34,8 @@ func main() {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
-	// at 8am reset everything
-	_, err := c.AddFunc("0 8 * * MON-FRI", func() {
+	// at 1pm reset everything
+	_, err := c.AddFunc("0 13 * * MON-FRI", func() {
 		log.Println("Resetting state.")
 		currentMenu = nil
 	})
@@ -44,7 +44,7 @@ func main() {
 	}
 
 	// at 11.30 start attempt to report this day's menu for up to 45 minutes
-	_, err = c.AddFunc("51 11 * * MON-FRI", func() {
+	_, err = c.AddFunc("30 11 * * MON-FRI", func() {
 		now := time.Now()
 		delay := 1 * time.Minute
 		timeout := now.Add(45 * time.Minute)
