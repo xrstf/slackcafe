@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-func ocr(image string) (string, error) {
+func ocrDocker(image string) (string, error) {
 	dir, err := filepath.Abs(filepath.Dir(image))
 	if err != nil {
 		return "", fmt.Errorf("failed to determine absolute path to %s: %v", image, err)
@@ -24,6 +24,16 @@ func ocr(image string) (string, error) {
 	}
 
 	cmd := exec.Command("docker", args...)
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to run Tesseract: %v", err)
+	}
+
+	return string(output), nil
+}
+
+func ocr(image string) (string, error) {
+	cmd := exec.Command("tesseract", image, "stdout", "-l", "deu")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("failed to run Tesseract: %v", err)

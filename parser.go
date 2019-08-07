@@ -3,7 +3,14 @@ package main
 import (
 	"regexp"
 	"strings"
+	"time"
 )
+
+type menu struct {
+	beginDate time.Time
+	endDate   time.Time
+	weekdays  []dailyMenu
+}
 
 type dailyMenu struct {
 	M1 menuItem
@@ -20,12 +27,14 @@ var weekdayNames = []string{"Montag", "Dienstag", "Mittwoch", "Donnerstag", "Fre
 
 const weekdays = 5
 
-func parseMenu(text string) ([]dailyMenu, error) {
-	result := make([]dailyMenu, 0)
+func parseMenu(text string) (*menu, error) {
+	plan := &menu{}
+	plan.weekdays = make([]dailyMenu, 0)
+
 	lines := toLines(text)
 	idx := 0
 
-	for idx = 0; idx < len(lines) && len(result) < weekdays; idx++ {
+	for idx = 0; idx < len(lines) && len(plan.weekdays) < weekdays; idx++ {
 		line := lines[idx]
 		if isWeekday(line) {
 			var m1, m2 menuItem
@@ -35,10 +44,15 @@ func parseMenu(text string) ([]dailyMenu, error) {
 			idx = skip(lines, idx)
 			m2, idx = readMenuItem(lines, idx)
 
-			result = append(result, dailyMenu{
+			plan.weekdays = append(plan.weekdays, dailyMenu{
 				M1: m1,
 				M2: m2,
 			})
+		}
+
+		if dates := parseDateLine(line); dates != nil {
+			plan.beginDate = dates[0]
+			plan.endDate = dates[1]
 		}
 	}
 
@@ -49,12 +63,12 @@ func parseMenu(text string) ([]dailyMenu, error) {
 
 		line := lines[idx]
 		if isPrice(line) {
-			result[itemIdx].M1.price = line
+			plan.weekdays[itemIdx].M1.price = line
 			idx++
 
 			idx = skip(lines, idx)
 			if idx < len(lines) && isPrice(lines[idx]) {
-				result[itemIdx].M2.price = lines[idx]
+				plan.weekdays[itemIdx].M2.price = lines[idx]
 				idx++
 			}
 
@@ -62,7 +76,7 @@ func parseMenu(text string) ([]dailyMenu, error) {
 		}
 	}
 
-	return result, nil
+	return plan, nil
 }
 
 func toLines(text string) []string {
@@ -83,6 +97,30 @@ func isWeekday(line string) bool {
 	}
 
 	return false
+}
+
+var dateLine = regexp.MustCompile(`^Vom ([0-9.]+) bis ([0-9.]+)$`)
+
+func parseDateLine(line string) []time.Time {
+	match := dateLine.FindStringSubmatch(line)
+	if match != nil {
+		result := make([]time.Time, 0)
+
+		parsed, err := time.Parse("02.01.2006", match[1])
+		if err != nil {
+			return nil
+		}
+		result = append(result, parsed)
+
+		parsed, err = time.Parse("02.01.2006", match[2])
+		if err != nil {
+			return nil
+		}
+		result = append(result, parsed.AddDate(0, 0, 1))
+
+		return result
+	}
+	return nil
 }
 
 var price = regexp.MustCompile(`^[0-9,.]+ €$`)
