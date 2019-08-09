@@ -10,6 +10,8 @@ FROM alpine:3.10
 RUN apk --no-cache add ca-certificates tzdata tesseract-ocr tesseract-ocr-data-deu
 
 ENTRYPOINT ["./slackcafe"]
+ENV TZ Europe/Berlin
 
 WORKDIR /app
 COPY --from=builder /go/src/github.com/xrstf/slackcafe/slackcafe .
+USER nobody
